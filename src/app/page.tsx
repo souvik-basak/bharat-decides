@@ -1,65 +1,80 @@
-import Image from "next/image";
+"use client";
+
+import React, { useState } from "react";
+import { ElectionTimeline } from "@/components/ElectionTimeline";
+import { ConstituencyMap } from "@/components/ConstituencyMap";
+import { BoothFinderModal } from "@/components/BoothFinderModal";
+import { motion } from "framer-motion";
+import { MapPin, Bot, CheckCircle2, Zap, Cloud } from "lucide-react";
+import { useQuizStore } from "@/store/useQuizStore";
 
 export default function Home() {
+  const { completedQuizzes } = useQuizStore();
+  const [isBoothModalOpen, setIsBoothModalOpen] = useState(false);
+  const progressPercent = (completedQuizzes.length / 6) * 100;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex flex-col flex-1 items-center justify-start pb-20 pt-24 px-4 md:px-8 overflow-x-hidden">
+      {/* Narrative Hero Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-4xl w-full text-center mb-20 space-y-8"
+      >
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-card border border-border text-foreground text-xs font-bold tracking-widest uppercase mb-6 shadow-sm relative overflow-hidden group">
+          <div className="absolute inset-x-0 bottom-0 h-0.5 bg-tricolor-line opacity-70 group-hover:opacity-100 transition-opacity" />
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF9933] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF9933]"></span>
+          </span>
+          Live 2026 Voter Hub
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        
+        <h1 className="text-5xl md:text-7xl font-heading font-extrabold tracking-tight leading-[1.1] mb-6">
+          Every Vote <span className="text-[#FF9933]">Counts</span>. <br/>
+          Every Voice <span className="text-[#138808]">Matters</span>.
+        </h1>
+        
+        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed">
+          Welcome to your simple guide to voting in India. Clear, easy, and made for every citizen of Bharat.
+        </p>
+
+        {/* Friendly Action Buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-4 pt-8">
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => document.getElementById('timeline')?.scrollIntoView({ behavior: 'smooth' })}
+            className="px-8 py-4 bg-primary text-white rounded-full font-black text-base shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 transition-all cursor-pointer"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            How to Vote
+          </motion.button>
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setIsBoothModalOpen(true)}
+            className="px-8 py-4 bg-card border border-border rounded-full font-black text-base text-foreground hover:bg-muted/50 transition-all shadow-sm cursor-pointer"
           >
-            Documentation
-          </a>
+            Find My Booth
+          </motion.button>
         </div>
-      </main>
+      </motion.div>
+
+      {/* Map Section */}
+      <div className="w-full max-w-6xl mb-32">
+        <ConstituencyMap />
+      </div>
+
+      {/* Narrative Steps section */}
+      <div id="timeline" className="w-full max-w-6xl">
+        <ElectionTimeline />
+      </div>
+
+      <BoothFinderModal 
+        isOpen={isBoothModalOpen} 
+        onClose={() => setIsBoothModalOpen(false)} 
+      />
     </div>
   );
 }
