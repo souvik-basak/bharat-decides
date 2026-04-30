@@ -291,9 +291,45 @@ export function ConstituencyMap() {
                 )}
               </AnimatePresence>
               {!isLoaded && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-card z-10">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Gathering Neighborhood Data...</p>
+                <div className="absolute inset-0 z-10 bg-card/80 backdrop-blur-sm flex flex-col items-center justify-center">
+                  <div className="w-full h-full max-w-4xl max-h-[500px] relative overflow-hidden rounded-3xl border border-border/50 bg-muted/20">
+                    {/* Shimmering Map Outlines */}
+                    <motion.div 
+                      animate={{ 
+                        opacity: [0.1, 0.3, 0.1],
+                        scale: [1, 1.02, 1]
+                      }}
+                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                      className="absolute inset-0 flex items-center justify-center opacity-10"
+                    >
+                      <MapPin className="w-64 h-64 text-primary" strokeWidth={0.5} />
+                    </motion.div>
+                    
+                    {/* Pulsing Loading Indicator */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
+                      <div className="relative">
+                        <motion.div 
+                          animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="absolute -inset-4 bg-primary/20 rounded-full blur-xl"
+                        />
+                        <div className="relative bg-background p-4 rounded-2xl border border-border shadow-2xl">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-black uppercase tracking-[0.3em] text-foreground mb-1">Electoral Pulse</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Syncing Nationwide Boundaries...</p>
+                      </div>
+                    </div>
+
+                    {/* Shimmer Effect */}
+                    <motion.div 
+                      animate={{ x: ['-100%', '100%'] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent skew-x-12"
+                    />
+                  </div>
                 </div>
               )}
             </div>

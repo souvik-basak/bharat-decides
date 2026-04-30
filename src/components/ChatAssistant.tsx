@@ -94,8 +94,34 @@ export default function ChatAssistant() {
 
       if (!response.ok) throw new Error("Failed to fetch response");
 
-      const data = await response.json();
-      setMessages(prev => [...prev, { role: "assistant", content: data.content }]);
+      // Handle Streaming Response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      
+      if (!reader) throw new Error("No reader available");
+
+      // Add empty assistant message to start streaming into
+      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+      
+      let accumulatedResponse = "";
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        accumulatedResponse += chunk;
+        
+        // Update the last message (the assistant one) with accumulated text
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { 
+            role: "assistant", 
+            content: accumulatedResponse 
+          };
+          return updated;
+        });
+      }
     } catch (error) {
       console.error(error);
       setMessages(prev => [...prev, { role: "assistant", content: "I'm so sorry, I'm having a bit of trouble connecting right now. Could you please try again in a moment?" }]);
@@ -223,9 +249,9 @@ export default function ChatAssistant() {
                     }`}>
                       {isUser ? <User className="h-4 w-4" /> : "V"}
                     </div>
-                    <div className={`px-5 py-2 rounded-3xl text-[12px] leading-relaxed max-w-[80%] shadow-sm border transition-all ${
+                    <div className={`px-5 py-3 rounded-3xl text-[13px] leading-relaxed max-w-[85%] shadow-sm border transition-all whitespace-pre-wrap ${
                       isUser 
-                        ? "bg-orange-500/5 border-orange-500/20 rounded-tr-none text-foreground text-right" 
+                        ? "bg-orange-500/5 border-orange-500/20 rounded-tr-none text-foreground" 
                         : "bg-emerald-500/5 border-emerald-500/20 rounded-tl-none text-foreground"
                     }`}>
                       {msg.content}
@@ -249,7 +275,7 @@ export default function ChatAssistant() {
                       <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
                       <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
                     </div>
-                    <span className="text-[10px] text-emerald-600/80 font-black uppercase tracking-widest">Analysing</span>
+                    <span className="text-xs text-muted -foreground">Thinking...</span>
                   </div>
                 </motion.div>
               )}

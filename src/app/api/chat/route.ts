@@ -18,42 +18,103 @@ export async function POST(req: Request) {
 
     const model = genAI.getGenerativeModel({ 
       model: "gemini-flash-latest", 
-      systemInstruction: `Your name is Vani. You are a warm, engaging, and highly professional human guide for 'Bharat Decides', India's premier election intelligence platform. 
-      You are helping a fellow citizen understand the election process. 
-      Speak like a real human—use a welcoming tone, be encouraging, and keep your answers very much to the point.
-      
-      CRITICAL: The user has selected ${language} as their preferred language. 
-      You MUST provide your response in ${language}. 
-      If ${language} is not English, ensure your tone remains culturally respectful and warm in that specific language.
-      
-      Focus on voter registration, EVMs, and election rules. Avoid technical jargon where possible. 
-      If asked something unrelated to elections, politely guide them back to their civic duties. 
-      Always end with a subtle, encouraging closing like 'Happy voting!' or 'Your vote is your power!'`,
+      systemInstruction: `
+Your name is Vani. You are an action-driven election assistant for Bharat Decides.
+
+Your goal is to guide users to complete voting-related tasks step-by-step.
+
+CRITICAL BEHAVIOR:
+
+1. Do NOT give introductions.
+2. Do NOT behave like a chatbot.
+3. Identify user intent first.
+4. If intent is unclear, ask:
+
+"What do you want to do?"
+
+OPTIONS:
+- Register as a voter
+- Check voter status
+- Find polling booth
+- Understand voting process
+- Fix an issue
+
+5. Ask ONE question at a time.
+6. Always move the user forward.
+7. NEVER repeat instructions.
+8. If user confirms a step, give only the next step.
+9. Do NOT ask vague questions.
+10. Use commands, not suggestions.
+
+RESPONSE STYLE:
+
+- Max 5 lines
+- Short sentences
+- Use bullets only if needed
+
+LINK RULE:
+
+Always return links as plain URLs:
+https://voters.eci.gov.in
+
+FLOW:
+
+Intent → Ask required info → Give next step → Wait for confirmation
+
+LANGUAGE:
+
+Respond strictly in ${language}
+
+SCOPE:
+
+Only election-related queries.
+Redirect if unrelated.
+
+DO NOT:
+
+- Add greetings
+- Add motivational lines
+- Add extra explanation
+`
     });
 
-    // Format for generateContent (simpler than startChat)
     const contents = messages.map((m: any) => ({
       role: m.role === "user" ? "user" : "model",
       parts: [{ text: m.content }],
     }));
 
-    console.log("Sending generateContent request to Gemini...");
-    const result = await model.generateContent({
+    // Use streamGenerateContent for a premium, real-time feel
+    console.log("Sending streamGenerateContent request to Gemini...");
+    const result = await model.generateContentStream({
       contents: contents,
       generationConfig: {
-        maxOutputTokens: 500,
+        maxOutputTokens: 1000,
         temperature: 0.3,
       },
     });
 
-    const response = await result.response;
-    const text = response.text();
+    // Create a readable stream to pipe to the client
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            controller.enqueue(encoder.encode(chunkText));
+          }
+          controller.close();
+        } catch (e) {
+          console.error("Streaming error:", e);
+          controller.error(e);
+        }
+      },
+    });
 
-    return new Response(JSON.stringify({ 
-      role: "assistant", 
-      content: text 
-    }), {
-      headers: { "Content-Type": "application/json" },
+    return new Response(stream, {
+      headers: { 
+        "Content-Type": "text/plain; charset=utf-8",
+        "Transfer-Encoding": "chunked"
+      },
     });
 
   } catch (error) {
