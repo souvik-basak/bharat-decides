@@ -140,17 +140,18 @@ export default function ChatAssistant() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.8 }}
             transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 20 }}
-            className="fixed bottom-[110px] right-8 z-[110] bg-white dark:bg-card border border-border px-5 py-3 rounded-2xl shadow-2xl pointer-events-none flex items-center gap-3 border-primary/20"
+            className="fixed bottom-[110px] right-8 z-[110] bg-card border border-border px-5 py-3 rounded-2xl shadow-2xl pointer-events-none flex items-center gap-3 border-primary/20"
           >
             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs uppercase text-black dark:text-white whitespace-nowrap">Chat with Vani</span>
-            <div className="absolute -bottom-2 right-8 w-4 h-4 bg-white dark:bg-card border-r border-b border-border rotate-45 border-primary/10" />
+            <span className="text-xs uppercase text-foreground whitespace-nowrap font-bold tracking-wider">Chat with Vani</span>
+            <div className="absolute -bottom-2 right-8 w-4 h-4 bg-card border-r border-b border-border rotate-45 border-primary/10" />
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Smart Trigger / Close Toggle */}
       <motion.button
+        data-testid="chat-toggle"
         onClick={() => setIsOpen(!isOpen)}
         initial={{ scale: 0, rotate: -20 }}
         animate={{ scale: 1, rotate: 0 }}

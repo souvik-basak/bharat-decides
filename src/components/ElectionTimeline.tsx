@@ -217,6 +217,7 @@ export default function ElectionTimeline() {
                   
                   <TabsTrigger 
                     value="quiz" 
+                    data-testid="quiz-tab"
                     disabled={!ELECTION_STAGES[activeStep].quiz}
                     className="relative rounded-xl px-8 py-2.5 text-sm font-bold transition-colors data-[state=active]:bg-transparent data-[state=active]:text-primary disabled:opacity-30 z-10"
                   >
