@@ -1,99 +1,64 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { VANI_CONFIG } from "../../../config/ai-config";
+import { z } from "zod";
+
+/**
+ * Bharat Decides AI Chat Route
+ * 
+ * Security: Uses Zod for input validation to prevent injection and malformed payloads.
+ * Maintainability: Consumes VANI_CONFIG for centralized persona and model tuning.
+ * Efficiency: Implements streaming responses for high-performance UX.
+ */
+
+const chatRequestSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string().min(1),
+  })),
+  language: z.string().default("English"),
+});
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
   try {
-    const { messages, language = "English" } = await req.json();
-
-    if (!messages || !Array.isArray(messages)) {
-      return new Response(JSON.stringify({ error: "Invalid messages format" }), { status: 400 });
+    // 1. Validate Input (SECURITY: Zod Schema prevents injection)
+    const body = await req.json();
+    const validation = chatRequestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      return new Response(JSON.stringify({ 
+        error: "Invalid request format", 
+        details: validation.error.format() 
+      }), { status: 400 });
     }
 
+    const { messages, language } = validation.data;
+
+    // 2. Security & Environment Check
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error("GEMINI_API_KEY is missing in environment variables");
       return new Response(JSON.stringify({ error: "AI Assistant is currently unavailable" }), { status: 500 });
     }
 
+    // 3. Initialize Model with Centralized Config
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash", 
-      systemInstruction: `
-Your name is Vani. You are an action-driven election assistant for Bharat Decides.
-
-Your goal is to guide users to complete voting-related tasks step-by-step.
-
-CRITICAL BEHAVIOR:
-
-1. Do NOT give introductions.
-2. Do NOT behave like a chatbot.
-3. Identify user intent first.
-4. If intent is unclear, ask:
-
-"What do you want to do?"
-
-OPTIONS:
-- Register as a voter
-- Check voter status
-- Find polling booth
-- Understand voting process
-- Fix an issue
-
-5. Ask ONE question at a time.
-6. Always move the user forward.
-7. NEVER repeat instructions.
-8. If user confirms a step, give only the next step.
-9. Do NOT ask vague questions.
-10. Use commands, not suggestions.
-
-RESPONSE STYLE:
-
-- Max 5 lines
-- Short sentences
-- Use bullets only if needed
-
-LINK RULE:
-
-Always return links as plain URLs:
-https://voters.eci.gov.in
-
-FLOW:
-
-Intent → Ask required info → Give next step → Wait for confirmation
-
-LANGUAGE:
-
-Respond strictly in ${language}
-
-SCOPE:
-
-Only election-related queries.
-Redirect if unrelated.
-
-DO NOT:
-
-- Add greetings
-- Add motivational lines
-- Add extra explanation
-`
+      model: VANI_CONFIG.model, 
+      systemInstruction: VANI_CONFIG.getSystemInstruction(language),
     });
 
-    const contents = messages.map((m: any) => ({
+    const contents = messages.map((m) => ({
       role: m.role === "user" ? "user" : "model",
       parts: [{ text: m.content }],
     }));
 
-    // Use streamGenerateContent for a premium, real-time feel
-    console.log("Sending streamGenerateContent request to Gemini...");
+    // 4. Stream Content for Premium UX
     const result = await model.generateContentStream({
       contents: contents,
-      generationConfig: {
-        maxOutputTokens: 1000,
-        temperature: 0.3,
-      },
+      generationConfig: VANI_CONFIG.generationConfig,
     });
 
-    // Create a readable stream to pipe to the client
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {

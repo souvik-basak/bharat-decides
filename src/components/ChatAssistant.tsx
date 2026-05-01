@@ -275,7 +275,7 @@ export default function ChatAssistant() {
                       <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
                       <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
                     </div>
-                    <span className="text-xs text-muted -foreground">Thinking...</span>
+                    <span className="text-xs text-muted-foreground">Thinking</span>
                   </div>
                 </motion.div>
               )}

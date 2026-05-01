@@ -38,26 +38,37 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--color-border);
+    outline-color: color-mix(in srgb, var(--color-ring), transparent 50%);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   button, 
   [role="button"],
   a {
-    @apply cursor-pointer;
+    cursor: pointer;
   }
 }
 
 @layer utilities {
   .glass-panel {
-    @apply bg-card border border-border shadow-sm;
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
   }
   
   .glass-card {
-    @apply bg-card border border-border hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-md;
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+  }
+  .glass-card:hover {
+    border-color: color-mix(in srgb, var(--color-primary), transparent 50%);
+    box-shadow: var(--shadow-md);
   }
 
   .text-gradient {

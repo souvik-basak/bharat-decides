@@ -42,7 +42,7 @@ export default function Navbar() {
               </span>
               <div className="flex items-center gap-1.5 mt-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-50 text-muted-foreground">Citizen Hub</span>
+                <span className="text-xs font-black uppercase opacity-50 text-muted-foreground">Citizen Hub</span>
               </div>
             </div>
           </Link>
