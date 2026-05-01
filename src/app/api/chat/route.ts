@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-flash-latest", 
+      model: "gemini-2.0-flash", 
       systemInstruction: `
 Your name is Vani. You are an action-driven election assistant for Bharat Decides.
 
