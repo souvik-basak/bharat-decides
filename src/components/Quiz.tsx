@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuizStore } from "@/store/useQuizStore";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { CheckCircle2, XCircle, BookOpen } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 export type Question = {
@@ -38,7 +38,7 @@ export function Quiz({ quizId, title, questions }: QuizProps) {
             <CheckCircle2 className="w-8 h-8 text-white fill-white/20" />
           </div>
           <h3 className="text-2xl font-bold mb-2">Knowledge Mastered!</h3>
-          <p className="text-muted-foreground">You have successfully completed the "{title}" quiz.</p>
+          <p className="text-muted-foreground">You have successfully completed the &quot;{title}&quot; quiz.</p>
         </CardContent>
       </Card>
     );

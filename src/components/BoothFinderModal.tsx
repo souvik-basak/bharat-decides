@@ -65,6 +65,18 @@ export function BoothFinderModal({ isOpen, onClose }: BoothFinderProps) {
     "Sishu Shiksha Kendra"
   ];
 
+interface PostOffice {
+  Name: string;
+  District: string;
+  State: string;
+  Taluk: string;
+}
+
+interface PostalResponse {
+  Status: string;
+  PostOffice: PostOffice[];
+}
+
   // Real-time lookup for PIN codes
   const handleSearch = async (value: string) => {
     setSearchTerm(value);
@@ -73,11 +85,11 @@ export function BoothFinderModal({ isOpen, onClose }: BoothFinderProps) {
       setIsSearching(true);
       try {
         const response = await fetch(`https://api.postalpincode.in/pincode/${value}`);
-        const data = await response.json();
+        const data: PostalResponse[] = await response.json();
         
         if (data[0].Status === "Success") {
           const postOffices = data[0].PostOffice;
-          const newBooths = postOffices.map((po: any, index: number) => {
+          const newBooths = postOffices.map((po, index) => {
             // Deterministically select a station type based on index
             const stationType = STATION_TYPES[index % STATION_TYPES.length];
             return {
@@ -147,13 +159,14 @@ export function BoothFinderModal({ isOpen, onClose }: BoothFinderProps) {
             
             <div className="relative group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 group-focus-within:text-primary transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Enter 6-digit PIN Code or Area..." 
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="w-full bg-background border border-border/80 rounded-xl py-3.5 pl-12 pr-4 text-sm font-semibold text-foreground placeholder:text-foreground/20 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/40 transition-all shadow-inner"
-              />
+                <input 
+                  type="text" 
+                  aria-label="Search for polling booths by PIN code or area"
+                  placeholder="Enter 6-digit PIN Code or Area..." 
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="w-full bg-background border border-border/80 rounded-xl py-3.5 pl-12 pr-4 text-sm font-semibold text-foreground placeholder:text-foreground/20 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/40 transition-all shadow-inner"
+                />
             </div>
           </div>
 

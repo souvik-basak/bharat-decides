@@ -55,8 +55,10 @@ export default function ChatAssistant() {
           setPlaceholder(placeholder.slice(0, -1));
         }, 50);
       } else {
-        setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDERS.length);
-        setIsTyping(true);
+        setTimeout(() => {
+          setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDERS.length);
+          setIsTyping(true);
+        }, 0);
       }
     }
     
@@ -76,59 +78,63 @@ export default function ChatAssistant() {
     }
   }, [messages]);
 
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+/**
+ * Send a message to the Vani AI assistant and handle the streaming response.
+ * @param e - React Form Event
+ */
+const sendMessage = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!input.trim() || isLoading) return;
 
-    const newMessages = [...messages, { role: "user" as const, content: input }];
-    setMessages(newMessages);
-    setInput("");
-    setIsLoading(true);
+  const newMessages: Message[] = [...messages, { role: "user" as const, content: input }];
+  setMessages(newMessages);
+  setInput("");
+  setIsLoading(true);
 
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, language })
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: newMessages, language })
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch response");
+
+    // Handle Streaming Response for premium real-time UX
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    
+    if (!reader) throw new Error("No reader available");
+
+    // Add empty assistant message to start streaming into
+    setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+    
+    let accumulatedResponse = "";
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      const chunk = decoder.decode(value, { stream: true });
+      accumulatedResponse += chunk;
+      
+      // Update the last message (the assistant one) with accumulated text
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { 
+          role: "assistant", 
+          content: accumulatedResponse 
+        };
+        return updated;
       });
-
-      if (!response.ok) throw new Error("Failed to fetch response");
-
-      // Handle Streaming Response
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      
-      if (!reader) throw new Error("No reader available");
-
-      // Add empty assistant message to start streaming into
-      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
-      
-      let accumulatedResponse = "";
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        const chunk = decoder.decode(value, { stream: true });
-        accumulatedResponse += chunk;
-        
-        // Update the last message (the assistant one) with accumulated text
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { 
-            role: "assistant", 
-            content: accumulatedResponse 
-          };
-          return updated;
-        });
-      }
-    } catch (error) {
-      console.error(error);
-      setMessages(prev => [...prev, { role: "assistant", content: "I'm so sorry, I'm having a bit of trouble connecting right now. Could you please try again in a moment?" }]);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error) {
+    console.error("Vani Chat Error:", error);
+    setMessages(prev => [...prev, { role: "assistant", content: "I'm so sorry, I'm having a bit of trouble connecting right now. Could you please try again in a moment?" }]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <>
@@ -218,9 +224,11 @@ export default function ChatAssistant() {
               <div className="flex items-center justify-between bg-muted/30 p-2 rounded-xl border border-border/50">
                 <div className="flex items-center gap-2 pl-2">
                   <MessageCircle className="w-3.5 h-3.5 text-primary opacity-70" />
-                  <span className="text-[13px] text-muted-foreground">Choose your language</span>
+                  <label htmlFor="vani-language" className="text-[13px] text-muted-foreground">Choose your language</label>
                 </div>
                 <select 
+                  id="vani-language"
+                  aria-label="Select Chat Language"
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
                   className="bg-background/80 backdrop-blur-md border border-border/50 rounded-lg text-[11px] font-bold px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer hover:bg-background transition-all"
@@ -233,7 +241,11 @@ export default function ChatAssistant() {
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-hide bg-gradient-to-b from-transparent to-muted/5">
+            <div 
+              aria-live="polite"
+              aria-atomic="false"
+              className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-hide bg-gradient-to-b from-transparent to-muted/5"
+            >
               {messages.map((msg, index) => {
                 const isUser = msg.role === "user";
                 return (

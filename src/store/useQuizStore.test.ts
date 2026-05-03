@@ -12,31 +12,31 @@ describe('useQuizStore', () => {
     expect(state.completedQuizzes).toEqual([]);
   });
 
-  it('should increment score for a specific quiz', () => {
-    const quizId = 'voter-registration';
+  it('should increment score for a quiz', () => {
+    const quizId = 'quiz-1';
     useQuizStore.getState().incrementScore(quizId);
+    
     expect(useQuizStore.getState().getScore(quizId)).toBe(1);
     
     useQuizStore.getState().incrementScore(quizId);
     expect(useQuizStore.getState().getScore(quizId)).toBe(2);
   });
 
-  it('should mark a quiz as completed', () => {
-    const quizId = 'voting-process';
+  it('should mark a quiz as completed only once', () => {
+    const quizId = 'quiz-1';
     useQuizStore.getState().markQuizCompleted(quizId);
     expect(useQuizStore.getState().completedQuizzes).toContain(quizId);
+    expect(useQuizStore.getState().completedQuizzes.length).toBe(1);
+
+    useQuizStore.getState().markQuizCompleted(quizId);
+    expect(useQuizStore.getState().completedQuizzes.length).toBe(1);
   });
 
-  it('should not add duplicate quiz IDs to completedQuizzes', () => {
-    const quizId = 'voting-process';
+  it('should reset progress', () => {
+    const quizId = 'quiz-1';
+    useQuizStore.getState().incrementScore(quizId);
     useQuizStore.getState().markQuizCompleted(quizId);
-    useQuizStore.getState().markQuizCompleted(quizId);
-    expect(useQuizStore.getState().completedQuizzes).toHaveLength(1);
-  });
-
-  it('should reset progress correctly', () => {
-    useQuizStore.getState().incrementScore('test');
-    useQuizStore.getState().markQuizCompleted('test');
+    
     useQuizStore.getState().resetProgress();
     
     const state = useQuizStore.getState();

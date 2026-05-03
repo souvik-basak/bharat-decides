@@ -14,7 +14,7 @@ export default function Home() {
   const progressPercent = (completedQuizzes.length / 6) * 100;
 
   return (
-    <div className="flex flex-col flex-1 items-center justify-start pb-20 pt-24 px-4 md:px-8 overflow-x-hidden">
+    <main className="flex flex-col flex-1 items-center justify-start pb-20 pt-24 px-4 md:px-8 overflow-x-hidden">
       {/* Narrative Hero Section */}
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
@@ -75,6 +75,6 @@ export default function Home() {
         isOpen={isBoothModalOpen} 
         onClose={() => setIsBoothModalOpen(false)} 
       />
-    </div>
+    </main>
   );
 }

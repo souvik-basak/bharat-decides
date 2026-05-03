@@ -97,7 +97,48 @@ const DARK_MAP_STYLE = [
 const GEOJSON_PC_URL = "https://raw.githubusercontent.com/tecoholic/LokShaba2019/master/india_pc_2019_simplified.geojson";
 const GEOJSON_AC_URL = "https://raw.githubusercontent.com/tecoholic/LokShaba2019/master/india_pc_2019_simplified.geojson"; // Fallback to PC for stability
 
-// Sub-component to handle map data layer logic since it needs APIProvider context
+/**
+ * Represents the detailed information for a selected constituency.
+ */
+interface ConstituencyDetails {
+  name: string;
+  state: string;
+  mp: string;
+  party: string;
+  color: string;
+  phase: string;
+  date: string;
+  performance: {
+    attendance: string;
+    debates: string;
+    questions: string;
+  };
+}
+
+/**
+ * Represents the item currently hovered on the map.
+ */
+interface MapHoverItem {
+  name: string;
+  state: string;
+}
+
+/**
+ * Props for the MapDataLayer sub-component.
+ */
+interface MapDataLayerProps {
+  activeLayer: "PC" | "AC";
+  hoveredItem: MapHoverItem | null;
+  setHoveredItem: (item: MapHoverItem | null) => void;
+  setSelectedConstituency: (details: ConstituencyDetails | null) => void;
+  setIsLoaded: (loaded: boolean) => void;
+  dataCache: Map<string, unknown>;
+}
+
+/**
+ * Sub-component to handle map data layer logic and GeoJSON rendering.
+ * @param props - MapDataLayerProps
+ */
 function MapDataLayer({ 
   activeLayer, 
   hoveredItem, 
@@ -105,7 +146,7 @@ function MapDataLayer({
   setSelectedConstituency, 
   setIsLoaded,
   dataCache
-}: any) {
+}: MapDataLayerProps) {
   const map = useMap();
 
   useEffect(() => {
@@ -114,11 +155,11 @@ function MapDataLayer({
     const abortController = new AbortController();
     const url = activeLayer === "PC" ? GEOJSON_PC_URL : GEOJSON_AC_URL;
 
-    const loadData = (data: any) => {
+    const loadData = (data: unknown) => {
       map.data.forEach((feature) => map.data.remove(feature));
       try {
-        map.data.addGeoJson(data);
-        setIsLoaded(true);
+        map.data.addGeoJson(data as object);
+        setTimeout(() => setIsLoaded(true), 0);
       } catch (e) {
         console.error("Failed to add GeoJSON to map:", e);
       }
@@ -147,7 +188,7 @@ function MapDataLayer({
         });
     }
 
-    map.data.setStyle((feature) => {
+    map.data.setStyle((feature: google.maps.Data.Feature) => {
       const pcName = feature.getProperty("PC_NAME") || feature.getProperty("pc_name") || "";
       const acName = feature.getProperty("AC_NAME") || feature.getProperty("ac_name") || "";
       const isHovered = hoveredItem && (pcName === hoveredItem.name || acName === hoveredItem.name);
@@ -162,10 +203,10 @@ function MapDataLayer({
       };
     });
 
-    const mouseOverListener = map.data.addListener("mouseover", (event: any) => {
+    const mouseOverListener = map.data.addListener("mouseover", (event: google.maps.Data.MouseEvent) => {
       const f = event.feature;
-      const name = f.getProperty("PC_NAME") || f.getProperty("pc_name") || f.getProperty("AC_NAME") || f.getProperty("ac_name") || "Constituency";
-      const state = f.getProperty("ST_NAME") || f.getProperty("st_name") || "India";
+      const name = (f.getProperty("PC_NAME") || f.getProperty("pc_name") || f.getProperty("AC_NAME") || f.getProperty("ac_name") || "Constituency") as string;
+      const state = (f.getProperty("ST_NAME") || f.getProperty("st_name") || "India") as string;
       setHoveredItem({ name, state });
     });
 
@@ -173,10 +214,10 @@ function MapDataLayer({
       setHoveredItem(null);
     });
 
-    const clickListener = map.data.addListener("click", (event: any) => {
+    const clickListener = map.data.addListener("click", (event: google.maps.Data.MouseEvent) => {
       const f = event.feature;
-      const name = f.getProperty("PC_NAME") || f.getProperty("pc_name") || f.getProperty("AC_NAME") || f.getProperty("ac_name") || "Constituency";
-      const state = f.getProperty("ST_NAME") || f.getProperty("st_name") || "India";
+      const name = (f.getProperty("PC_NAME") || f.getProperty("pc_name") || f.getProperty("AC_NAME") || f.getProperty("ac_name") || "Constituency") as string;
+      const state = (f.getProperty("ST_NAME") || f.getProperty("st_name") || "India") as string;
       
       setSelectedConstituency({
         name,
@@ -192,27 +233,34 @@ function MapDataLayer({
 
     return () => {
       abortController.abort();
-      google.maps.event.clearInstanceListeners(map.data);
+      google.maps.event.removeListener(mouseOverListener);
+      google.maps.event.removeListener(mouseOutListener);
+      google.maps.event.removeListener(clickListener);
     };
   }, [map, activeLayer, hoveredItem?.name, dataCache, setIsLoaded, setHoveredItem, setSelectedConstituency]);
 
   return null;
 }
 
+/**
+ * Main component for the Interactive Constituency Map.
+ * Provides a visualization of Parliamentary and Assembly boundaries in India.
+ */
 export function ConstituencyMap() {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [selectedConstituency, setSelectedConstituency] = useState<any>(null);
-  const [hoveredItem, setHoveredItem] = useState<any>(null);
+  const [selectedConstituency, setSelectedConstituency] = useState<ConstituencyDetails | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<MapHoverItem | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeLayer, setActiveLayer] = useState<"PC" | "AC">("PC");
   
   // Cache for loaded GeoJSON data using globalThis to avoid naming conflicts with Map component
-  const dataCache = useMemo(() => new globalThis.Map<string, any>(), []);
+  const dataCache = useMemo(() => new globalThis.Map<string, unknown>(), []);
   const abortControllerRef = React.useRef<AbortController | null>(null);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const isDark = mounted && resolvedTheme === "dark";
@@ -258,7 +306,6 @@ export function ConstituencyMap() {
                 defaultZoom={4.5}
                 disableDefaultUI={true}
                 gestureHandling={'greedy'}
-                onIdle={() => setIsLoaded(true)}
                 styles={isDark ? DARK_MAP_STYLE : []}
               >
                 <MapDataLayer 

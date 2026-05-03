@@ -2,12 +2,37 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Circle, BookOpen, AlertCircle, ShieldCheck, HelpCircle } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Quiz, Question } from "./Quiz";
+import { 
+  CheckCircle2, 
+  BookOpen, 
+  AlertCircle, 
+  ShieldCheck
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Quiz, Question } from "./Quiz";
 
-export const ELECTION_STAGES = [
+/**
+ * Represents a single stage in the election process lifecycle.
+ */
+interface ElectionStage {
+  id: string;
+  title: string;
+  description: string;
+  details: string;
+  proTip: string;
+  myth: string;
+  fact: string;
+  quiz: {
+    id: string;
+    title: string;
+    questions: Question[];
+  } | null;
+}
+
+/**
+ * The master dataset for the election journey stages.
+ */
+export const ELECTION_STAGES: ElectionStage[] = [
   {
     id: "registration",
     title: "Voters Registration",
@@ -34,7 +59,7 @@ export const ELECTION_STAGES = [
           correctOptionIndex: 1,
           explanation: "The BLO is the ground-level official who conducts physical verification of your residence."
         }
-      ] as Question[]
+      ]
     }
   },
   {
@@ -56,7 +81,7 @@ export const ELECTION_STAGES = [
           correctOptionIndex: 1,
           explanation: "Form 26 is a mandatory affidavit where candidates disclose their full background to the public."
         }
-      ] as Question[]
+      ]
     }
   },
   {
@@ -88,7 +113,7 @@ export const ELECTION_STAGES = [
           correctOptionIndex: 2,
           explanation: "The 48-hour window allows voters to deliberate without external influence from rallies or media ads."
         }
-      ] as Question[]
+      ]
     }
   },
   {
@@ -110,7 +135,7 @@ export const ELECTION_STAGES = [
           correctOptionIndex: 1,
           explanation: "The slip appears for exactly 7 seconds before automatically dropping into the sealed ballot box."
         }
-      ] as Question[]
+      ]
     }
   },
   {
@@ -125,7 +150,13 @@ export const ELECTION_STAGES = [
   }
 ];
 
-export default function ElectionTimeline() {
+/**
+ * ElectionTimeline Component
+ * 
+ * Provides an immersive, narrative-driven walkthrough of the Indian voting process.
+ * Features interactive cards with deep-dive details and integrated quiz validation.
+ */
+export function ElectionTimeline() {
   const [activeStep, setActiveStep] = useState(0);
   const [activeTab, setActiveTab] = useState("learn");
 
@@ -139,7 +170,7 @@ export default function ElectionTimeline() {
       {/* Narrative Stepper */}
       <div className="md:w-1/3 lg:w-1/4 space-y-12">
         <div className="space-y-4">
-          <h2 className="text-3xl font-heading font-extrabold tracking-tight">The <span className="text-gradient">Journey</span></h2>
+          <h2 className="text-3xl font-heading font-extrabold tracking-tight">The <span className="text-primary">Journey</span></h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
             From the initial voter registration to the declaration of results, follow each critical phase of the democratic process.
           </p>
@@ -254,7 +285,7 @@ export default function ElectionTimeline() {
                         {ELECTION_STAGES[activeStep].title}
                       </h2>
                       <p className="text-base md:text-lg text-muted-foreground leading-relaxed italic border-l-4 border-primary/20 pl-4">
-                        "{ELECTION_STAGES[activeStep].description}"
+                        &quot;{ELECTION_STAGES[activeStep].description}&quot;
                       </p>
                     </div>
 
@@ -337,6 +368,3 @@ export default function ElectionTimeline() {
     </div>
   );
 }
-
-export { ElectionTimeline };
-
